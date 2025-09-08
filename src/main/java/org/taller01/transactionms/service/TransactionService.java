@@ -71,7 +71,6 @@ public class TransactionService {
                 getAccount(req.toAccountId())
         ).flatMap(tuple -> {
             AccountResponse source = tuple.getT1();
-            AccountResponse destination = tuple.getT2();
 
             if (source.getBalance().compareTo(req.amount()) < 0) {
                 return saveFailed(TransactionType.TRANSFER, req.fromAccountId(), req.toAccountId(), req.amount(),
