@@ -5,5 +5,5 @@ import org.taller01.transactionms.domain.Transaction;
 import reactor.core.publisher.Flux;
 
 public interface TransactionRepository extends ReactiveMongoRepository<Transaction, String> {
-    Flux<Transaction> findByFromAccountIdOrToAccountId(String fromId, String toId);
+  Flux<Transaction> findByFromAccountIdOrToAccountId(String fromId, String toId);
 }

@@ -8,16 +8,19 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Document("transactions")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Transaction {
-    @Id
-    private String id;
-    private TransactionType type;
-    private TransactionStatus status;
+  @Id
+  private String id;
+  private TransactionType type;
+  private TransactionStatus status;
 
-    private String fromAccountId;   // null para depósito
-    private String toAccountId;     // null para retiro
-    private BigDecimal amount;
-    private Instant createdAt;
-    private String message;         // detalle/observación
+  private String fromAccountId; // null para depósito
+  private String toAccountId; // null para retiro
+  private BigDecimal amount;
+  private Instant createdAt;
+  private String message; // detalle/observación
 }

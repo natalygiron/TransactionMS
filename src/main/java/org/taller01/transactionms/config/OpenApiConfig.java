@@ -8,12 +8,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
-    @Bean
-    public OpenAPI transactionOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("API de Transacciones Bancarias")
-                        .version("1.0.0")
-                        .description("Microservicio para registrar depósitos, retiros, transferencias y consultar historial de cuentas"));
-    }
+  @Bean
+  public OpenAPI transactionOpenAPI() {
+    return new OpenAPI()
+        .info(new Info().title("API de Transacciones Bancarias").version("1.0.0").description(
+            "Microservicio para registrar depósitos, retiros, transferencias y consultar historial de cuentas"));
+  }
 }
