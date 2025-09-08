@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  title: API de Transacciones Bancarias
+  version: 1.0.0
+  description: Microservicio para registrar depósitos, retiros, transferencias y consultar historial
+
+servers:
+  - url: http://localhost:8082
+
+paths:
+  /transacciones/deposito:
+    post:
+      summary: Registrar depósito
+      description: Registra un depósito en una cuenta existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+            examples:
+              ejemplo-deposito:
+                summary: Depósito de 100 soles
+                value:
+                  accountId: "68bd301812736c427ae171ee"
+                  amount: 100.0
+      responses:
+        '200':
+          description: Depósito registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+              examples:
+                respuesta-exitosa:
+                  summary: Transacción exitosa
+                  value:
+                    id: "abc123"
+                    type: "DEPOSIT"
+                    status: "SUCCESS"
+                    fromAccountId: null
+                    toAccountId: "68bd301812736c427ae171ee"
+                    amount: 100.0
+                    createdAt: "2025-09-08T03:14:34.481928200Z"
+                    message: "Depósito aplicado"
+
+  /transacciones/retiro:
+    post:
+      summary: Registrar retiro
+      description: Registra un retiro desde una cuenta existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawRequest'
+            examples:
+              ejemplo-retiro:
+                summary: Retiro de 50 soles
+                value:
+                  accountId: "68bd301812736c427ae171ee"
+                  amount: 50.0
+      responses:
+        '200':
+          description: Retiro registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+              examples:
+                respuesta-exitosa:
+                  summary: Retiro exitoso
+                  value:
+                    id: "def456"
+                    type: "WITHDRAWAL"
+                    status: "SUCCESS"
+                    fromAccountId: "68bd301812736c427ae171ee"
+                    toAccountId: null
+                    amount: 50.0
+                    createdAt: "2025-09-08T03:15:00.000000000Z"
+                    message: "Retiro aplicado"
+
+  /transacciones/transferencia:
+    post:
+      summary: Registrar transferencia
+      description: Transfiere dinero entre dos cuentas válidas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+            examples:
+              ejemplo-transferencia:
+                summary: Transferencia de 5 soles entre cuentas
+                value:
+                  fromAccountId: "68bd2d02a44f743f92283c1d"
+                  toAccountId: "68bd301812736c427ae171ee"
+                  amount: 5.0
+      responses:
+        '200':
+          description: Transferencia registrada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+              examples:
+                respuesta-exitosa:
+                  summary: Transferencia exitosa
+                  value:
+                    id: "ghi789"
+                    type: "TRANSFER"
+                    status: "SUCCESS"
+                    fromAccountId: "68bd2d02a44f743f92283c1d"
+                    toAccountId: "68bd301812736c427ae171ee"
+                    amount: 5.0
+                    createdAt: "2025-09-08T03:16:00.000000000Z"
+                    message: "Transferencia aplicada"
+
+  /transacciones/historial:
+    get:
+      summary: Consultar historial de transacciones
+      description: Devuelve todas las transacciones donde la cuenta aparece como origen o destino
+      parameters:
+        - name: cuentaId
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "68bd301812736c427ae171ee"
+      responses:
+        '200':
+          description: Lista de transacciones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionResponse'
+              examples:
+                historial-ejemplo:
+                  summary: Historial de transacciones
+                  value:
+                    - id: "abc123"
+                      type: "DEPOSIT"
+                      status: "SUCCESS"
+                      fromAccountId: null
+                      toAccountId: "68bd301812736c427ae171ee"
+                      amount: 100.0
+                      createdAt: "2025-09-08T03:14:34.481928200Z"
+                      message: "Depósito aplicado"
+                    - id: "ghi789"
+                      type: "TRANSFER"
+                      status: "SUCCESS"
+                      fromAccountId: "68bd2d02a44f743f92283c1d"
+                      toAccountId: "68bd301812736c427ae171ee"
+                      amount: 5.0
+                      createdAt: "2025-09-08T03:16:00.000000000Z"
+                      message: "Transferencia aplicada"
+
+components:
+  schemas:
+    DepositRequest:
+      type: object
+      required: [accountId, amount]
+      properties:
+        accountId:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+
+    WithdrawRequest:
+      type: object
+      required: [accountId, amount]
+      properties:
+        accountId:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+
+    TransferRequest:
+      type: object
+      required: [fromAccountId, toAccountId, amount]
+      properties:
+        fromAccountId:
+          type: string
+        toAccountId:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [DEPOSIT, WITHDRAWAL, TRANSFER]
+        status:
+          type: string
+          enum: [SUCCESS, FAILED]
+        fromAccountId:
+          type: string
+          nullable: true
+        toAccountId:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          format: double
+        createdAt:
+          type: string
+          format: date-time
+        message:
+          type: string

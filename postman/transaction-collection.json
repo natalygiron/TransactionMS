@@ -1,0 +1,72 @@
+{
+  "info": {
+    "name": "TransactionMS - Microservicio",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "📥 Registrar depósito",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountId\": \"68bd301812736c427ae171ee\",\n  \"amount\": 100.0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/transacciones/deposito",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["transacciones", "deposito"]
+        }
+      }
+    },
+    {
+      "name": "📤 Registrar retiro",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountId\": \"68bd301812736c427ae171ee\",\n  \"amount\": 50.0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/transacciones/retiro",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["transacciones", "retiro"]
+        }
+      }
+    },
+    {
+      "name": "🔁 Registrar transferencia",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fromAccountId\": \"68bd2d02a44f743f92283c1d\",\n  \"toAccountId\": \"68bd301812736c427ae171ee\",\n  \"amount\": 5.0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/transacciones/transferencia",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["transacciones", "transferencia"]
+        }
+      }
+    },
+    {
+      "name": "📄 Consultar historial de transacciones",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8082/transacciones/historial?cuentaId=68bd301812736c427ae171ee",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["transacciones", "historial"],
+          "query": [{ "key": "cuentaId", "value": "68bd301812736c427ae171ee" }]
+        }
+      }
+    }
+  ]
+}

@@ -1,6 +1,5 @@
 package org.taller01.transactionms.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -28,13 +27,6 @@ public class TransactionService {
 
     private final TransactionRepository repo;
     private final WebClient webClient;
-
-//    public TransactionService(TransactionRepository repo,
-//                              WebClient.Builder builder,
-//                              @Value("${accountms.base-url}") String accountBaseUrl) {
-//        this.repo = repo;
-//        this.webClient = builder.baseUrl(accountBaseUrl).build();
-//    }
 
     // --------------------------------------------------------------------------------
     // Operaciones públicas
@@ -80,7 +72,7 @@ public class TransactionService {
         ).flatMap(tuple -> {
             AccountResponse source = tuple.getT1();
             AccountResponse destination = tuple.getT2();
-            System.out.println(source + " " +destination);
+
             if (source.getBalance().compareTo(req.amount()) < 0) {
                 return saveFailed(TransactionType.TRANSFER, req.fromAccountId(), req.toAccountId(), req.amount(),
                         new IllegalStateException("Saldo insuficiente en la cuenta de origen"));
