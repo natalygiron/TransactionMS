@@ -20,19 +20,19 @@ public class TransactionController {
 
     /** POST /transacciones/deposito — registrar depósito */
     @PostMapping("/deposito")
-    public Mono<TransactionResponse> depositar(@Valid @RequestBody DepositRequest req) {
+    public Mono<TransactionResponse> deposit(@Valid @RequestBody DepositRequest req) {
         return service.deposit(req).map(TransactionResponse::from);
     }
 
     /** POST /transacciones/retiro — registrar retiro */
     @PostMapping("/retiro")
-    public Mono<TransactionResponse> retirar(@Valid @RequestBody WithdrawRequest req) {
+    public Mono<TransactionResponse> withdraw(@Valid @RequestBody WithdrawRequest req) {
         return service.withdraw(req).map(TransactionResponse::from);
     }
 
     /** POST /transacciones/transferencia — registrar transferencia */
     @PostMapping("/transferencia")
-    public Mono<TransactionResponse> transferir(@Valid @RequestBody TransferRequest req) {
+    public Mono<TransactionResponse> transfer(@Valid @RequestBody TransferRequest req) {
         return service.transfer(req).map(TransactionResponse::from);
     }
 
