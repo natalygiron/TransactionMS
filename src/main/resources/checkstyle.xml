@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/configuration_1_2.dtd">
+<module name="Checker">
+
+    <module name="FileTabCharacter" />
+    <module name="NewlineAtEndOfFile" />
+
+    <!-- Checks que sí van dentro de TreeWalker -->
+    <module name="TreeWalker">
+        <module name="PackageName">
+            <property name="format" value="org\.taller01\.transactionms(\..+)?" />
+        </module>
+
+        <module name="TypeName" />
+        <module name="MethodName" />
+        <module name="LocalVariableName" />
+
+        <module name="MethodLength">
+            <property name="max" value="50" />
+        </module>
+
+        <module name="UnusedImports" />
+
+        <module name="ImportOrder">
+            <property name="ordered" value="true" />
+            <property name="separated" value="true" />
+        </module>
+    </module>
+</module>
