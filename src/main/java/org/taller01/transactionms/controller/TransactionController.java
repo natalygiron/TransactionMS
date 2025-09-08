@@ -38,7 +38,7 @@ public class TransactionController {
 
     /** GET /transacciones/historial?accountId=... — historial por cuenta (origen o destino) */
     @GetMapping("/historial")
-    public Flux<TransactionResponse> historial(@RequestParam String accountId) {
-        return service.history(accountId).map(TransactionResponse::from);
+    public Flux<TransactionResponse> history(@RequestParam String cuentaId) {
+        return service.getHistory(cuentaId);
     }
 }

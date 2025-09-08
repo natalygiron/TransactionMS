@@ -12,7 +12,10 @@ import org.taller01.transactionms.domain.TransactionType;
 import org.taller01.transactionms.dto.request.DepositRequest;
 import org.taller01.transactionms.dto.request.TransferRequest;
 import org.taller01.transactionms.dto.request.WithdrawRequest;
+import org.taller01.transactionms.dto.response.TransactionResponse;
+import org.taller01.transactionms.integration.account.AccountResponse;
 import org.taller01.transactionms.repository.TransactionRepository;
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,17 +23,18 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Service
+@RequiredArgsConstructor
 public class TransactionService {
 
     private final TransactionRepository repo;
     private final WebClient webClient;
 
-    public TransactionService(TransactionRepository repo,
-                              WebClient.Builder builder,
-                              @Value("${accountms.base-url}") String accountBaseUrl) {
-        this.repo = repo;
-        this.webClient = builder.baseUrl(accountBaseUrl).build();
-    }
+//    public TransactionService(TransactionRepository repo,
+//                              WebClient.Builder builder,
+//                              @Value("${accountms.base-url}") String accountBaseUrl) {
+//        this.repo = repo;
+//        this.webClient = builder.baseUrl(accountBaseUrl).build();
+//    }
 
     // --------------------------------------------------------------------------------
     // Operaciones públicas
@@ -66,46 +70,39 @@ public class TransactionService {
 
     public Mono<Transaction> transfer(TransferRequest req) {
         if (req.fromAccountId().equals(req.toAccountId())) {
-            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "La cuenta origen y destino no pueden ser iguales"));
+            return saveFailed(TransactionType.TRANSFER, req.fromAccountId(), req.toAccountId(), req.amount(),
+                    new IllegalArgumentException("No se puede transferir entre la misma cuenta"));
         }
 
-        // 1) Intentar retirar del origen
-        return callAccountWithdraw(req.fromAccountId(), req.amount())
+        return Mono.zip(
+                getAccount(req.fromAccountId()),
+                getAccount(req.toAccountId())
+        ).flatMap(tuple -> {
+            AccountResponse source = tuple.getT1();
+            AccountResponse destination = tuple.getT2();
+            System.out.println(source + " " +destination);
+            if (source.getBalance().compareTo(req.amount()) < 0) {
+                return saveFailed(TransactionType.TRANSFER, req.fromAccountId(), req.toAccountId(), req.amount(),
+                        new IllegalStateException("Saldo insuficiente en la cuenta de origen"));
+            }
 
-                // 2) Solo si el retiro fue OK, intentar depositar al destino
-                .then(Mono.defer(() ->
-                        callAccountDeposit(req.toAccountId(), req.amount())
-
-                                // 3) Si el depósito fue OK, guardar SUCCESS
-                                .then(save(Transaction.builder()
-                                        .type(TransactionType.TRANSFER)
-                                        .status(TransactionStatus.SUCCESS)
-                                        .fromAccountId(req.fromAccountId())
-                                        .toAccountId(req.toAccountId())
-                                        .amount(req.amount())
-                                        .createdAt(Instant.now())
-                                        .message("Transferencia aplicada")
-                                        .build()))
-
-                                // 4) Si el depósito falla, COMPENSAR el retiro y guardar FAILED
-                                .onErrorResume(e ->
-                                        callAccountDeposit(req.fromAccountId(), req.amount())
-                                                .onErrorResume(comp -> Mono.empty()) // si la compensación falla, igual registramos FAILED
-                                                .then(saveFailed(TransactionType.TRANSFER,
-                                                        req.fromAccountId(), req.toAccountId(), req.amount(), e)))
-                ))
-
-                // 5) Si el retiro falla, NO compensar (porque no se debitó). Guardar FAILED.
-                .onErrorResume(e ->
-                        saveFailed(TransactionType.TRANSFER,
-                                req.fromAccountId(), req.toAccountId(), req.amount(), e));
+            return callAccountWithdraw(req.fromAccountId(), req.amount())
+                    .then(callAccountDeposit(req.toAccountId(), req.amount()))
+                    .then(save(Transaction.builder()
+                            .type(TransactionType.TRANSFER)
+                            .status(TransactionStatus.SUCCESS)
+                            .fromAccountId(req.fromAccountId())
+                            .toAccountId(req.toAccountId())
+                            .amount(req.amount())
+                            .createdAt(Instant.now())
+                            .message("Transferencia aplicada")
+                            .build()));
+        }).onErrorResume(e -> saveFailed(TransactionType.TRANSFER, req.fromAccountId(), req.toAccountId(), req.amount(), e));
     }
 
-
-    public Flux<Transaction> history(String accountId) {
-        // historial por cuenta (origen o destino)
-        return repo.findByFromAccountIdOrToAccountId(accountId, accountId);
+    public Flux<TransactionResponse> getHistory(String accountId) {
+        return repo.findByFromAccountIdOrToAccountId(accountId, accountId)
+                .map(TransactionResponse::from);
     }
 
     // --------------------------------------------------------------------------------
@@ -169,5 +166,20 @@ public class TransactionService {
                 .createdAt(Instant.now())
                 .message(msg != null ? msg : "Fallo en operación")
                 .build());
+    }
+
+    private Mono<AccountResponse> getAccount(String accountId) {
+        return webClient.get()
+                .uri("/cuentas/{id}", accountId)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, r ->
+                        r.bodyToMono(String.class)
+                                .defaultIfEmpty("Cuenta no encontrada")
+                                .map(msg -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg)))
+                .onStatus(HttpStatusCode::is5xxServerError, r ->
+                        r.bodyToMono(String.class)
+                                .defaultIfEmpty("AccountMS no disponible")
+                                .map(msg -> new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, msg)))
+                .bodyToMono(AccountResponse.class);
     }
 }
