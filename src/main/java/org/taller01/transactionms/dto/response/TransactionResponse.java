@@ -1,10 +1,8 @@
 package org.taller01.transactionms.dto.response;
 
 import lombok.*;
-import org.taller01.transactionms.domain.Transaction;
 import org.taller01.transactionms.domain.TransactionStatus;
 import org.taller01.transactionms.domain.TransactionType;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 

@@ -8,6 +8,7 @@ class TransactionMsApplicationTests {
 
     @Test
     void contextLoads() {
+        //comentario para evitar error por sonarlite
     }
 
 }

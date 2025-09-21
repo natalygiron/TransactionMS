@@ -16,41 +16,36 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class TransferTransaction implements TransactionStrategy<TransferRequest> {
 
-    private final TransactionRepository repo;
-    private final AccountClientPort accountClient;
-    private final TransactionFactory factory;
+  private final TransactionRepository repo;
+  private final AccountClientPort accountClient;
+  private final TransactionFactory factory;
 
-    @Override
-    public TransactionType getType() {
-        return TransactionType.TRANSFER;
+  @Override
+  public TransactionType getType() {
+    return TransactionType.TRANSFER;
+  }
+
+  @Override
+  public Mono<Transaction> execute(TransferRequest req) {
+    if (req.fromAccountId().equals(req.toAccountId())) {
+      return repo.save(factory.failure(TransactionType.TRANSFER, req.fromAccountId(),
+          req.toAccountId(), req.amount(), Messages.SAME_ACCOUNT_TRANSFER));
     }
 
-    @Override
-    public Mono<Transaction> execute(TransferRequest req) {
-        if (req.fromAccountId().equals(req.toAccountId())) {
-            return repo.save(factory.failure(TransactionType.TRANSFER,
-                    req.fromAccountId(), req.toAccountId(),
-                    req.amount(), Messages.SAME_ACCOUNT_TRANSFER));
-        }
+    return Mono.zip(accountClient.getAccount(req.fromAccountId()),
+        accountClient.getAccount(req.toAccountId())).flatMap(tuple -> {
+          AccountResponse source = tuple.getT1();
 
-        return Mono.zip(accountClient.getAccount(req.fromAccountId()), accountClient.getAccount(req.toAccountId()))
-                .flatMap(tuple -> {
-                    AccountResponse source = tuple.getT1();
+          if (source.getBalance().compareTo(req.amount()) < 0) {
+            return repo.save(factory.failure(TransactionType.TRANSFER, req.fromAccountId(),
+                req.toAccountId(), req.amount(), Messages.INSUFFICIENT_BALANCE));
+          }
 
-                    if (source.getBalance().compareTo(req.amount()) < 0) {
-                        return repo.save(factory.failure(TransactionType.TRANSFER,
-                                req.fromAccountId(), req.toAccountId(),
-                                req.amount(), Messages.INSUFFICIENT_BALANCE));
-                    }
-
-                    return accountClient.withdraw(req.fromAccountId(), req.amount())
-                            .then(accountClient.deposit(req.toAccountId(), req.amount()))
-                            .then(repo.save(factory.success(TransactionType.TRANSFER,
-                                    req.fromAccountId(), req.toAccountId(),
-                                    req.amount(), Messages.TRANSFER_SUCCESS)));
-                })
-                .onErrorResume(e -> repo.save(factory.failure(TransactionType.TRANSFER,
-                        req.fromAccountId(), req.toAccountId(),
-                        req.amount(), e.getMessage())));
-    }
+          return accountClient.withdraw(req.fromAccountId(), req.amount())
+              .then(accountClient.deposit(req.toAccountId(), req.amount()))
+              .then(repo.save(factory.success(TransactionType.TRANSFER, req.fromAccountId(),
+                  req.toAccountId(), req.amount(), Messages.TRANSFER_SUCCESS)));
+        }).onErrorResume(e -> repo.save(factory.failure(TransactionType.TRANSFER,
+            req.fromAccountId(), req.toAccountId(), req.amount(), e.getMessage())));
+  }
 }

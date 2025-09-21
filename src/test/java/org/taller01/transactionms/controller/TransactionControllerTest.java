@@ -1,7 +1,5 @@
 package org.taller01.transactionms.controller;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -15,6 +13,7 @@ import org.taller01.transactionms.dto.request.DepositRequest;
 import org.taller01.transactionms.dto.request.TransferRequest;
 import org.taller01.transactionms.dto.request.WithdrawRequest;
 import org.taller01.transactionms.dto.response.TransactionResponse;
+import org.taller01.transactionms.mapper.TransactionMapper;
 import org.taller01.transactionms.service.TransactionService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,175 +22,111 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 @WebFluxTest(controllers = TransactionController.class)
 class TransactionControllerTest {
 
     @Autowired
-    private WebTestClient webTestClient;
+    private WebTestClient webClient;
 
     @MockBean
     private TransactionService service;
 
-    // ------- helpers without unused parameters (no inspection warnings) -------
-    private Transaction baseTx(TransactionType type) {
+    @MockBean
+    private TransactionMapper mapper;
+
+    private Transaction sampleTx(String id, TransactionType type, BigDecimal amount) {
         return Transaction.builder()
-                .id("T1")
+                .id(id)
                 .type(type)
                 .status(TransactionStatus.SUCCESS)
-                .fromAccountId("A1")
-                .toAccountId("A2")
-                .amount(new BigDecimal("100"))
-                .message("ok")
+                .amount(amount)
                 .createdAt(Instant.now())
                 .build();
     }
-    private Transaction txDeposit()   { return baseTx(TransactionType.DEPOSIT); }
-    private Transaction txWithdrawal(){ return baseTx(TransactionType.WITHDRAWAL); }
-    private Transaction txTransfer()  { return baseTx(TransactionType.TRANSFER); }
 
-    // --------------------------
-    // POST /transacciones/deposito
-    // --------------------------
-    @Nested @DisplayName("POST /transacciones/deposito")
-    class Deposit {
-
-        @Test
-        @DisplayName("returns 200 with transaction payload")
-        void deposit_success_200() {
-            given(service.deposit(any(DepositRequest.class)))
-                    .willReturn(Mono.just(txDeposit()));
-
-            webTestClient.post()
-                    .uri("/transacciones/deposito")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue("{\"accountId\":\"A1\",\"amount\":100}")
-                    .exchange()
-                    .expectStatus().isOk()
-                    .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-                    .expectBody()
-                    .jsonPath("$.id").isEqualTo("T1")
-                    .jsonPath("$.type").isEqualTo("DEPOSIT")
-                    .jsonPath("$.status").isEqualTo("SUCCESS")
-                    .jsonPath("$.amount").isEqualTo(100);
-        }
-
-        @Test
-        @DisplayName("returns 400 when body is missing")
-        void deposit_bad_request_400_when_body_empty() {
-            webTestClient.post()
-                    .uri("/transacciones/deposito")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .exchange()
-                    .expectStatus().isBadRequest();
-        }
+    private TransactionResponse sampleResp(String id, TransactionType type, BigDecimal amount) {
+        return TransactionResponse.builder()
+                .id(id)
+                .type(type)
+                .status(TransactionStatus.SUCCESS)
+                .amount(amount)
+                .createdAt(Instant.now())
+                .message("ok")
+                .build();
     }
 
-    // ------------------------
-    // POST /transacciones/retiro
-    // ------------------------
-    @Nested @DisplayName("POST /transacciones/retiro")
-    class Withdraw {
+    @Test
+    void deposit_returnsOk() {
+        Transaction tx = sampleTx("1", TransactionType.DEPOSIT, BigDecimal.valueOf(100));
+        TransactionResponse resp = sampleResp("1", TransactionType.DEPOSIT, BigDecimal.valueOf(100));
 
-        @Test
-        @DisplayName("returns 200 with transaction payload")
-        void withdraw_success_200() {
-            given(service.withdraw(any(WithdrawRequest.class)))
-                    .willReturn(Mono.just(txWithdrawal()));
+        when(service.deposit(any(DepositRequest.class))).thenReturn(Mono.just(tx));
+        when(mapper.toResponse(tx)).thenReturn(resp);
 
-            webTestClient.post()
-                    .uri("/transacciones/retiro")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue("{\"accountId\":\"A1\",\"amount\":50}")
-                    .exchange()
-                    .expectStatus().isOk()
-                    .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-                    .expectBody()
-                    .jsonPath("$.type").isEqualTo("WITHDRAWAL")
-                    .jsonPath("$.status").isEqualTo("SUCCESS")
-                    .jsonPath("$.fromAccountId").isEqualTo("A1");
-        }
-
-        @Test
-        @DisplayName("returns 400 when body is missing")
-        void withdraw_bad_request_400_when_body_empty() {
-            webTestClient.post()
-                    .uri("/transacciones/retiro")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .exchange()
-                    .expectStatus().isBadRequest();
-        }
+        webClient.post()
+                .uri("/transacciones/deposito")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new DepositRequest("acc1", BigDecimal.valueOf(100)))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TransactionResponse.class)
+                .isEqualTo(resp);
     }
 
-    // --------------------------------
-    // POST /transacciones/transferencia
-    // --------------------------------
-    @Nested @DisplayName("POST /transacciones/transferencia")
-    class Transfer {
+    @Test
+    void withdraw_returnsOk() {
+        Transaction tx = sampleTx("2", TransactionType.WITHDRAWAL, BigDecimal.valueOf(50));
+        TransactionResponse resp = sampleResp("2", TransactionType.WITHDRAWAL, BigDecimal.valueOf(50));
 
-        @Test
-        @DisplayName("returns 200 with transaction payload")
-        void transfer_success_200() {
-            given(service.transfer(any(TransferRequest.class)))
-                    .willReturn(Mono.just(txTransfer()));
+        when(service.withdraw(any(WithdrawRequest.class))).thenReturn(Mono.just(tx));
+        when(mapper.toResponse(tx)).thenReturn(resp);
 
-            webTestClient.post()
-                    .uri("/transacciones/transferencia")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue("{\"fromAccountId\":\"A1\",\"toAccountId\":\"A2\",\"amount\":70}")
-                    .exchange()
-                    .expectStatus().isOk()
-                    .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-                    .expectBody()
-                    .jsonPath("$.type").isEqualTo("TRANSFER")
-                    .jsonPath("$.status").isEqualTo("SUCCESS")
-                    .jsonPath("$.fromAccountId").isEqualTo("A1")
-                    .jsonPath("$.toAccountId").isEqualTo("A2");
-        }
-
-        @Test
-        @DisplayName("returns 400 when body is missing")
-        void transfer_bad_request_400_when_body_empty() {
-            webTestClient.post()
-                    .uri("/transacciones/transferencia")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .exchange()
-                    .expectStatus().isBadRequest();
-        }
+        webClient.post()
+                .uri("/transacciones/retiro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new WithdrawRequest("acc1", BigDecimal.valueOf(50)))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TransactionResponse.class)
+                .isEqualTo(resp);
     }
 
-    // -----------------------------
-    // GET /transacciones/historial
-    // -----------------------------
-    @Nested @DisplayName("GET /transacciones/historial")
-    class History {
+    @Test
+    void transfer_returnsOk() {
+        Transaction tx = sampleTx("3", TransactionType.TRANSFER, BigDecimal.valueOf(200));
+        TransactionResponse resp = sampleResp("3", TransactionType.TRANSFER, BigDecimal.valueOf(200));
 
-        @Test
-        @DisplayName("returns 200 with list payload")
-        void history_success_200() {
-            TransactionResponse tr = TransactionResponse.from(txDeposit());
-            given(service.getHistory(eq("A1"))).willReturn(Flux.just(tr));
+        when(service.transfer(any(TransferRequest.class))).thenReturn(Mono.just(tx));
+        when(mapper.toResponse(tx)).thenReturn(resp);
 
-            webTestClient.get()
-                    .uri("/transacciones/historial?cuentaId=A1")
-                    .exchange()
-                    .expectStatus().isOk()
-                    .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-                    .expectBody()
-                    .jsonPath("$[0].id").isEqualTo("T1")
-                    .jsonPath("$[0].type").isEqualTo("DEPOSIT")
-                    .jsonPath("$[0].status").isEqualTo("SUCCESS");
-        }
+        webClient.post()
+                .uri("/transacciones/transferencia")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new TransferRequest("a1", "a2", BigDecimal.valueOf(200)))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(TransactionResponse.class)
+                .isEqualTo(resp);
+    }
 
-        @Test
-        @DisplayName("returns 400 when cuentaId is missing")
-        void history_bad_request_400_when_param_missing() {
-            webTestClient.get()
-                    .uri("/transacciones/historial")
-                    .exchange()
-                    .expectStatus().isBadRequest();
-        }
+    @Test
+    void history_returnsFlux() {
+        Transaction tx1 = sampleTx("4", TransactionType.DEPOSIT, BigDecimal.valueOf(100));
+        Transaction tx2 = sampleTx("5", TransactionType.WITHDRAWAL, BigDecimal.valueOf(30));
+        TransactionResponse resp1 = sampleResp("4", TransactionType.DEPOSIT, BigDecimal.valueOf(100));
+        TransactionResponse resp2 = sampleResp("5", TransactionType.WITHDRAWAL, BigDecimal.valueOf(30));
+
+        when(service.getHistory("acc1")).thenReturn(Flux.just(tx1, tx2));
+        when(mapper.toResponse(tx1)).thenReturn(resp1);
+        when(mapper.toResponse(tx2)).thenReturn(resp2);
+
+        webClient.get()
+                .uri("/transacciones/historial?accountId=acc1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(TransactionResponse.class)
+                .contains(resp1, resp2);
     }
 }

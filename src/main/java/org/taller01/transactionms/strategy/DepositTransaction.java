@@ -15,21 +15,21 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class DepositTransaction implements TransactionStrategy<DepositRequest> {
 
-    private final TransactionRepository repo;
-    private final AccountClientPort accountClient;
-    private final TransactionFactory factory;
+  private final TransactionRepository repo;
+  private final AccountClientPort accountClient;
+  private final TransactionFactory factory;
 
-    @Override
-    public TransactionType getType() {
-        return TransactionType.DEPOSIT;
-    }
+  @Override
+  public TransactionType getType() {
+    return TransactionType.DEPOSIT;
+  }
 
-    @Override
-    public Mono<Transaction> execute(DepositRequest req) {
-        return accountClient.deposit(req.accountId(), req.amount())
-                .then(repo.save(factory.success(TransactionType.DEPOSIT, null, req.accountId(),
-                        req.amount(), Messages.DEPOSIT_SUCCESS)))
-                .onErrorResume(e -> repo.save(factory.failure(TransactionType.DEPOSIT, null,
-                        req.accountId(), req.amount(), e.getMessage())));
-    }
+  @Override
+  public Mono<Transaction> execute(DepositRequest req) {
+    return accountClient.deposit(req.accountId(), req.amount())
+        .then(repo.save(factory.success(TransactionType.DEPOSIT, null, req.accountId(),
+            req.amount(), Messages.DEPOSIT_SUCCESS)))
+        .onErrorResume(e -> repo.save(factory.failure(TransactionType.DEPOSIT, null,
+            req.accountId(), req.amount(), e.getMessage())));
+  }
 }

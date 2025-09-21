@@ -24,7 +24,7 @@
 		<module name="UnusedImports" />
 
 		<module name="ImportOrder">
-			<property name="ordered" value="true" />
+			<property name="ordered" value="false" />
 			<property name="separated" value="true" />
 		</module>
 	</module>

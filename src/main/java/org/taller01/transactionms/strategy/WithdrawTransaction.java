@@ -15,21 +15,21 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class WithdrawTransaction implements TransactionStrategy<WithdrawRequest> {
 
-    private final TransactionRepository repo;
-    private final AccountClientPort accountClient;
-    private final TransactionFactory factory;
+  private final TransactionRepository repo;
+  private final AccountClientPort accountClient;
+  private final TransactionFactory factory;
 
-    @Override
-    public TransactionType getType() {
-        return TransactionType.WITHDRAWAL;
-    }
+  @Override
+  public TransactionType getType() {
+    return TransactionType.WITHDRAWAL;
+  }
 
-    @Override
-    public Mono<Transaction> execute(WithdrawRequest req) {
-        return accountClient.withdraw(req.accountId(), req.amount())
-                .then(repo.save(factory.success(TransactionType.WITHDRAWAL, req.accountId(), null,
-                        req.amount(), Messages.WITHDRAW_SUCCESS)))
-                .onErrorResume(e -> repo.save(factory.failure(TransactionType.WITHDRAWAL,
-                        req.accountId(), null, req.amount(), e.getMessage())));
-    }
+  @Override
+  public Mono<Transaction> execute(WithdrawRequest req) {
+    return accountClient.withdraw(req.accountId(), req.amount())
+        .then(repo.save(factory.success(TransactionType.WITHDRAWAL, req.accountId(), null,
+            req.amount(), Messages.WITHDRAW_SUCCESS)))
+        .onErrorResume(e -> repo.save(factory.failure(TransactionType.WITHDRAWAL, req.accountId(),
+            null, req.amount(), e.getMessage())));
+  }
 }
