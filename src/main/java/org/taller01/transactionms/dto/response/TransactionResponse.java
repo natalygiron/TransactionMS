@@ -21,10 +21,4 @@ public class TransactionResponse {
   private BigDecimal amount;
   private Instant createdAt;
   private String message;
-
-  public static TransactionResponse from(Transaction t) {
-    return TransactionResponse.builder().id(t.getId()).type(t.getType()).status(t.getStatus())
-        .fromAccountId(t.getFromAccountId()).toAccountId(t.getToAccountId()).amount(t.getAmount())
-        .createdAt(t.getCreatedAt()).message(t.getMessage()).build();
-  }
 }

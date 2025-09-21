@@ -73,7 +73,7 @@ public class TransactionController {
       @ApiResponse(responseCode = "400", description = "Parámetro cuentaId faltante"),
       @ApiResponse(responseCode = "500", description = "Error interno del servidor")})
   @GetMapping("/historial")
-  public Flux<TransactionResponse> history(@RequestParam String cuentaId) {
-    return service.getHistory(cuentaId);
+  public Flux<TransactionResponse> history(@RequestParam String accountId) {
+    return service.getHistory(accountId);
   }
 }
