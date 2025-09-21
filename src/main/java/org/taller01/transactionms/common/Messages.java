@@ -14,4 +14,5 @@ public final class Messages {
   // ==== Errores ====
   public static final String SAME_ACCOUNT_TRANSFER = "No se puede transferir entre la misma cuenta";
   public static final String INSUFFICIENT_BALANCE = "Saldo insuficiente en la cuenta de origen";
+  public static final String TRANSFER_FAILED = "La transferencia no pudo completarse";
 }
