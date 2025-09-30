@@ -18,51 +18,35 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class WithdrawTransaction implements TransactionStrategy<WithdrawRequest> {
 
-    private final ITransactionRepository repo;
-    private final AccountClientPort accountClient;
-    private final TransactionFactory factory;
+  private final ITransactionRepository repo;
+  private final AccountClientPort accountClient;
+  private final TransactionFactory factory;
 
-    @Override
-    public TransactionType getType() {
-        return TransactionType.WITHDRAWAL;
-    }
+  @Override
+  public TransactionType getType() {
+    return TransactionType.WITHDRAWAL;
+  }
 
-    @Override
-    public Mono<Transaction> execute(WithdrawRequest req) {
-        return accountClient.withdraw(req.accountId(), req.amount())
-                .then(repo.save(factory.success(
-                        TransactionType.WITHDRAWAL,
-                        req.accountId(),
-                        null,
-                        req.amount(),
-                        Messages.WITHDRAW_SUCCESS
-                )))
-                .onErrorResume(WebClientResponseException.class, ex -> {
-                    int statusCode = ex.getStatusCode().value();
-                    String body = ex.getResponseBodyAsString();
+  @Override
+  public Mono<Transaction> execute(WithdrawRequest req) {
+    return accountClient.withdraw(req.accountId(), req.amount())
+        .then(repo.save(factory.success(TransactionType.WITHDRAWAL, req.accountId(), null,
+            req.amount(), Messages.WITHDRAW_SUCCESS)))
+        .onErrorResume(WebClientResponseException.class, ex -> {
+          int statusCode = ex.getStatusCode().value();
+          String body = ex.getResponseBodyAsString();
 
-                    log.error("❌ Error en AccountMS al retirar de cuenta {}: {} - {}",
-                            req.accountId(), statusCode, body, ex);
+          log.error("❌ Error en AccountMS al retirar de cuenta {}: {} - {}", req.accountId(),
+              statusCode, body, ex);
 
-                    return repo.save(factory.failure(
-                            TransactionType.WITHDRAWAL,
-                            req.accountId(),
-                            null,
-                            req.amount(),
-                            "Error en AccountMS: " + statusCode + " - " + body
-                    ));
-                })
-                .onErrorResume(e -> {
-                    log.error("⚠️ Error inesperado al retirar de cuenta {}: {}",
-                            req.accountId(), e.getMessage(), e);
+          return repo.save(factory.failure(TransactionType.WITHDRAWAL, req.accountId(), null,
+              req.amount(), "Error en AccountMS: " + statusCode + " - " + body));
+        }).onErrorResume(e -> {
+          log.error("⚠️ Error inesperado al retirar de cuenta {}: {}", req.accountId(),
+              e.getMessage(), e);
 
-                    return repo.save(factory.failure(
-                            TransactionType.WITHDRAWAL,
-                            req.accountId(),
-                            null,
-                            req.amount(),
-                            e.getMessage()
-                    ));
-                });
-    }
+          return repo.save(factory.failure(TransactionType.WITHDRAWAL, req.accountId(), null,
+              req.amount(), e.getMessage()));
+        });
+  }
 }

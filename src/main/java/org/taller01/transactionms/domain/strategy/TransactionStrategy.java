@@ -6,5 +6,6 @@ import reactor.core.publisher.Mono;
 
 public interface TransactionStrategy<T> {
   TransactionType getType();
+
   Mono<Transaction> execute(T request);
 }

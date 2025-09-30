@@ -12,12 +12,12 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 public class Transaction {
-    private String id;
-    private TransactionType type;
-    private TransactionStatus status;
-    private String fromAccountId;
-    private String toAccountId;
-    private BigDecimal amount;
-    private Instant createdAt;
-    private String message;
+  private String id;
+  private TransactionType type;
+  private TransactionStatus status;
+  private String fromAccountId;
+  private String toAccountId;
+  private BigDecimal amount;
+  private Instant createdAt;
+  private String message;
 }

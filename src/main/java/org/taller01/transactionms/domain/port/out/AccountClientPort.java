@@ -6,6 +6,8 @@ import java.math.BigDecimal;
 
 public interface AccountClientPort {
   Mono<Void> deposit(String accountId, BigDecimal amount);
+
   Mono<Void> withdraw(String accountId, BigDecimal amount);
+
   Mono<AccountResponse> getAccount(String accountId);
 }

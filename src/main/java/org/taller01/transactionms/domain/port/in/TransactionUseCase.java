@@ -8,8 +8,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface TransactionUseCase {
-    Mono<Transaction> deposit(DepositRequest request);
-    Mono<Transaction> withdraw(WithdrawRequest request);
-    Mono<Transaction> transfer(TransferRequest request);
-    Flux<Transaction> getHistory(String accountId);
+  Mono<Transaction> deposit(DepositRequest request);
+
+  Mono<Transaction> withdraw(WithdrawRequest request);
+
+  Mono<Transaction> transfer(TransferRequest request);
+
+  Flux<Transaction> getHistory(String accountId);
 }

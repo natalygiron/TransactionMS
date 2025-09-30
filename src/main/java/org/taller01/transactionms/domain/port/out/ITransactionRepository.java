@@ -5,6 +5,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface ITransactionRepository {
-    Mono<Transaction> save(Transaction transaction);
-    Flux<Transaction> findByAccountId(String accountId);
+  Mono<Transaction> save(Transaction transaction);
+
+  Flux<Transaction> findByAccountId(String accountId);
 }

@@ -3,7 +3,6 @@ package org.taller01.transactionms.infrastructure.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.taller01.transactionms.application.service.TransactionService;
 import org.taller01.transactionms.domain.port.in.TransactionUseCase;
 import org.taller01.transactionms.dto.request.DepositRequest;
 import org.taller01.transactionms.dto.request.TransferRequest;

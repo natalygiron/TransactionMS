@@ -13,18 +13,18 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class TransactionRepositoryAdapter implements ITransactionRepository {
 
-    private final TransactionRepository mongoRepository;
-    private final TransactionEntityMapper mapper;
+  private final TransactionRepository mongoRepository;
+  private final TransactionEntityMapper mapper;
 
-    @Override
-    public Mono<Transaction> save(Transaction transaction) {
-        TransactionEntity entity = mapper.toEntity(transaction);
-        return mongoRepository.save(entity).map(mapper::toDomain);
-    }
+  @Override
+  public Mono<Transaction> save(Transaction transaction) {
+    TransactionEntity entity = mapper.toEntity(transaction);
+    return mongoRepository.save(entity).map(mapper::toDomain);
+  }
 
-    @Override
-    public Flux<Transaction> findByAccountId(String accountId) {
-        return mongoRepository.findByFromAccountIdOrToAccountId(accountId, accountId)
-                .map(mapper::toDomain);
-    }
+  @Override
+  public Flux<Transaction> findByAccountId(String accountId) {
+    return mongoRepository.findByFromAccountIdOrToAccountId(accountId, accountId)
+        .map(mapper::toDomain);
+  }
 }

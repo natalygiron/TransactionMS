@@ -13,7 +13,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import org.taller01.transactionms.domain.exception.ResourceNotFoundException;
-
 import java.net.ConnectException;
 import java.time.Instant;
 import java.util.Map;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
   private ResponseEntity<ApiError> build(HttpStatus status, String message,
-                                         ServerWebExchange exchange, Map<String, String> fields) {
+      ServerWebExchange exchange, Map<String, String> fields) {
     String path = exchange.getRequest().getPath().value();
     String error = status.is4xxClientError() ? "Solicitud incorrecta" : "Error del servidor";
     ApiError body = ApiError.builder().timestamp(Instant.now()).status(status.value()).error(error)

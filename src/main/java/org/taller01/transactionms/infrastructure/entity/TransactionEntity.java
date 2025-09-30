@@ -5,7 +5,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.taller01.transactionms.domain.model.TransactionStatus;
 import org.taller01.transactionms.domain.model.TransactionType;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 
@@ -16,14 +15,14 @@ import java.time.Instant;
 @Builder
 public class TransactionEntity {
 
-    @Id
-    private String id;
+  @Id
+  private String id;
 
-    private TransactionType type;
-    private TransactionStatus status;
-    private String fromAccountId;
-    private String toAccountId;
-    private BigDecimal amount;
-    private Instant createdAt;
-    private String message;
+  private TransactionType type;
+  private TransactionStatus status;
+  private String fromAccountId;
+  private String toAccountId;
+  private BigDecimal amount;
+  private Instant createdAt;
+  private String message;
 }

@@ -29,40 +29,29 @@ public class DepositTransaction implements TransactionStrategy<DepositRequest> {
 
   @Override
   public Mono<Transaction> execute(DepositRequest req) {
-    return accountClient.deposit(req.accountId(), req.amount())
-            .then(repo.save(factory.success(
-                    TransactionType.DEPOSIT,
-                    null,
-                    req.accountId(),
-                    req.amount(),
-                    Messages.DEPOSIT_SUCCESS
-            )))
-            .onErrorResume(WebClientResponseException.class, ex -> {
-              int statusCode = ex.getStatusCode().value();
-              String body = ex.getResponseBodyAsString();
+    return accountClient.deposit(req.accountId(), req.amount()).then(repo.save(factory.success( // 👈
+                                                                                                // cambiamos
+                                                                                                // flatMap
+                                                                                                // ->
+                                                                                                // then
+        TransactionType.DEPOSIT, null, req.accountId(), req.amount(), Messages.DEPOSIT_SUCCESS)))
+        .onErrorResume(ex -> {
+          if (ex instanceof WebClientResponseException wcre) {
+            int statusCode = wcre.getStatusCode().value();
+            String body = wcre.getResponseBodyAsString();
 
-              log.error("❌ Error en AccountMS al depositar en cuenta {}: {} - {}",
-                      req.accountId(), statusCode, body, ex);
+            log.error("❌ Error en AccountMS al depositar en cuenta {}: {} - {}", req.accountId(),
+                statusCode, body, wcre);
 
-              return repo.save(factory.failure(
-                      TransactionType.DEPOSIT,
-                      null,
-                      req.accountId(),
-                      req.amount(),
-                      "Error en AccountMS: " + statusCode + " - " + body
-              ));
-            })
-            .onErrorResume(e -> {
-              log.error("⚠️ Error inesperado al depositar en cuenta {}: {}",
-                      req.accountId(), e.getMessage(), e);
+            return repo.save(factory.failure(TransactionType.DEPOSIT, null, req.accountId(),
+                req.amount(), "Error en AccountMS: " + statusCode + " - " + body));
+          }
 
-              return repo.save(factory.failure(
-                      TransactionType.DEPOSIT,
-                      null,
-                      req.accountId(),
-                      req.amount(),
-                      e.getMessage()
-              ));
-            });
+          log.error("⚠️ Error inesperado al depositar en cuenta {}: {}", req.accountId(),
+              ex.getMessage(), ex);
+
+          return repo.save(factory.failure(TransactionType.DEPOSIT, null, req.accountId(),
+              req.amount(), ex.getMessage()));
+        });
   }
 }
